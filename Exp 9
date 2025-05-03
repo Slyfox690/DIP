@@ -1,0 +1,60 @@
+import numpy as np
+import cv2
+import matplotlib.pyplot as plt
+from scipy.fftpack import dct, idct
+# Load the image in grayscale
+I = cv2.imread(r"/content/Screenshot (2).png", cv2.IMREAD_GRAYSCALE)
+# Normalize the image to the range [0, 1]
+I = I / 255.0
+
+# Define the DCT matrix for 8x8 block
+def dct2(block):
+    return dct(dct(block.T, norm='ortho').T, norm='ortho')
+
+# Define the inverse DCT matrix for 8x8 block
+def idct2(block):
+    return idct(idct(block.T, norm='ortho').T, norm='ortho')
+
+# Divide the image into 8x8 blocks
+rows, cols = I.shape
+block_size = 8
+blocks = [I[i:i+block_size, j:j+block_size] for i in range(0, rows, block_size) for j in range(0, cols, block_size)]
+
+# Apply DCT on each 8x8 block
+B = np.array([dct2(block) for block in blocks])
+
+# Define the mask as given in the MATLAB code
+mask = np.array([[1, 1, 1, 1, 0, 0, 0, 0],
+                 [1, 1, 1, 0, 0, 0, 0, 0],
+                 [1, 1, 0, 0, 0, 0, 0, 0],
+                 [1, 0, 0, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 0, 0],
+                 [0, 0, 0, 0, 0, 0, 0, 0]])
+
+# Apply the mask (multiply DCT coefficients by mask)
+B2 = np.array([block * mask for block in B])
+
+# Apply inverse DCT to each modified 8x8 block
+I2 = np.zeros_like(I)
+for i in range(0, rows, block_size):
+    for j in range(0, cols, block_size):
+        block_index = (i // block_size) * (cols // block_size) + (j // block_size)
+        I2[i:i+block_size, j:j+block_size] = idct2(B2[block_index])
+
+# Display the original and compressed images
+plt.figure(figsize=(10, 8))
+
+# Original Image
+plt.subplot(1, 2, 1)
+plt.imshow(I, cmap='gray')
+plt.title('Original Image')
+
+# Compressed Image (after DCT and Masking)
+plt.subplot(1, 2, 2)
+plt.imshow(I2, cmap='gray')
+plt.title('Compressed Image')
+plt.tight_layout()
+plt.show()
+
