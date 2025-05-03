@@ -1,0 +1,30 @@
+import cv2
+import matplotlib.pyplot as plt
+# Load the image
+image = cv2.imread(r'/content/Screenshot (2).png', cv2.IMREAD_GRAYSCALE)  # Load as grayscale
+
+# Get image dimensions
+x, y = image.shape  # x = height (rows), y = width (columns)
+
+# Manually flip the image vertically
+length = x - 1  # Last row index
+for i in range(x // 2):  # Only iterate halfway
+    for j in range(y):
+        # Swap pixels manually
+        temp = image[i, j]
+        image[i, j] = image[length, j]
+        image[length, j] = temp
+    length -= 1  # Move towards the center
+
+# Display the original and flipped images
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.imshow(cv2.imread(r'/content/Screenshot (2).png', cv2.IMREAD_GRAYSCALE), cmap='gray')
+plt.title('Original Image')
+plt.axis('off')
+plt.subplot(1, 2, 2)
+plt.imshow(image, cmap='gray')
+plt.title('Flipped Image')
+plt.axis('off')
+
+plt.show()
