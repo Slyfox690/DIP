@@ -1,0 +1,73 @@
+import numpy as np
+import cv2
+import matplotlib.pyplot as plt
+from scipy.fftpack import fft2, ifft2
+
+# Load the image and convert to grayscale
+x = cv2.imread("/content/cameraman.jpg", cv2.IMREAD_GRAYSCALE)
+x = np.float64(x)  # Convert to float for processing
+
+# Parameters
+sigma = 50
+gamma = 1
+alpha = 1
+M, N = x.shape
+
+# Create a 5x5 averaging filter (H)
+h = np.ones((5, 5)) / 25
+
+# Compute the 2D FFT of the original image and filter
+Freqa = fft2(x)
+Freqh = fft2(h, (M, N))
+
+# Add noise to the image (simulating a degraded image)
+y = np.real(ifft2(Freqh * Freqa)) + 25 * np.random.randn(M, N)
+
+# Compute the FFT of the degraded image
+Freqy = fft2(y)
+
+# Power spectral density of the noisy image
+Powy = np.abs(Freqy) ** 2 / (M * N)
+
+# Wiener filter
+sFreqh = Freqh * (np.abs(Freqh) > 0) + 1 / gamma * (np.abs(Freqh) == 0)
+iFreqh = 1 / sFreqh
+iFreqh = iFreqh * (np.abs(Freqh) * gamma > 1) + gamma * np.abs(sFreqh) * iFreqh * (np.abs(sFreqh) * gamma <= 1)
+
+# Power spectrum regularization
+Powy = np.where(Powy > sigma ** 2, Powy, sigma ** 2)
+
+# Wiener filter response
+Freqg = iFreqh * (Powy - sigma ** 2) / (Powy - (1 - alpha) * sigma ** 2)
+
+# Apply the Wiener filter to the noisy image
+ResFreqa = Freqg * Freqy
+
+# Inverse FFT to get the restored image
+Resa = np.real(ifft2(ResFreqa))
+
+# Convert images to uint8
+x_uint8 = np.uint8(np.clip(x, 0, 255))
+y_uint8 = np.uint8(np.clip(y, 0, 255))
+Resa_uint8 = np.uint8(np.clip(Resa, 0, 255))
+
+# Plot the original, degraded, and restored images
+plt.figure(figsize=(12, 4))
+
+# Original image
+plt.subplot(1, 3, 1)
+plt.imshow(x_uint8, cmap='gray')
+plt.title('Original Image')
+
+# Degraded image (noisy image)
+plt.subplot(1, 3, 2)
+plt.imshow(y_uint8, cmap='gray')
+plt.title('Degraded Image')
+
+# Restored image (after Wiener filter)
+plt.subplot(1, 3, 3)
+plt.imshow(Resa_uint8, cmap='gray')
+plt.title('Restored Image')
+
+plt.tight_layout()
+plt.show()
