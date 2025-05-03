@@ -1,0 +1,35 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load the image in grayscale
+image = cv2.imread(r"/content/Screenshot (2).png", cv2.IMREAD_GRAYSCALE)
+
+# Create copies for processing
+x = np.zeros_like(image)  # For Gray Level Slicing with Background
+y = np.zeros_like(image)  # For Gray Level Slicing without Background
+
+# Apply Gray Level Slicing using NumPy (Vectorized)
+mask = (image > 50) & (image < 150)  # Boolean mask where pixel values are between 50 and 150
+
+x[mask] = image[mask]  # Keep original pixel values (With background)
+y[mask] = 255          # Set selected pixels to white (Without background)
+
+# Plot the images
+plt.figure(figsize=(10, 4))
+plt.subplot(1, 3, 1)
+plt.imshow(image, cmap='gray')
+plt.title('Original Image')
+plt.axis('off')
+
+plt.subplot(1, 3, 2)
+plt.imshow(x, cmap='gray')
+plt.title('GrayLS (With Background)')
+plt.axis('off')
+
+plt.subplot(1, 3, 3)
+plt.imshow(y, cmap='gray')
+plt.title('Gray LS (Without Background)')
+plt.axis('off')
+
+plt.show()
