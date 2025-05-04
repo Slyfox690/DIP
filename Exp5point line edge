@@ -1,0 +1,48 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load grayscale image
+img = cv2.imread("/content/cameraman.jpg", cv2.IMREAD_GRAYSCALE)
+
+# Convert to float64 for precision
+img_float = img.astype(np.float64)
+
+# Define point detection mask (Laplacian)
+point_kernel = np.array([[-1, -1, -1],
+                         [-1,  8, -1],
+                         [-1, -1, -1]])
+
+# Apply the kernel using filter2D
+point_response = cv2.filter2D(img_float, -1, point_kernel)
+
+# Take absolute values (to catch both positive and negative responses)
+point_response_abs = np.abs(point_response)
+
+# Threshold to keep only strong point responses
+threshold_value = 150  # You can adjust this value based on the image
+_, point_detected = cv2.threshold(point_response_abs, threshold_value, 255, cv2.THRESH_BINARY)
+
+# Convert to uint8
+point_detected = point_detected.astype(np.uint8)
+
+# Display the results
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 3, 1)
+plt.imshow(img, cmap='gray')
+plt.title('Original Image')
+plt.axis('off')
+
+plt.subplot(1, 3, 2)
+plt.imshow(point_response_abs, cmap='gray')
+plt.title('Point Response (Abs Filter Output)')
+plt.axis('off')
+
+plt.subplot(1, 3, 3)
+plt.imshow(point_detected, cmap='gray')
+plt.title('Point Detection (Thresholded)')
+plt.axis('off')
+
+plt.tight_layout()
+plt.show()
